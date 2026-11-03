@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Puente de las Formas - Lógica de 1er Año</title>
+    
+    <style>
+        .tile { touch-action: none; transition: transform 0.15s ease, background-color 0.2s ease; }
+        .tile:active { transform: scale(0.95); }
+    
+*{box-sizing:border-box}body{margin:0;background:#dff5ff;font-family:Arial,sans-serif;min-height:100vh;padding:20px;display:flex;align-items:center;justify-content:center;color:#334155}body>div{background:white;width:100%;max-width:760px;padding:24px;border:4px solid #f8ca65;border-radius:28px;box-shadow:0 18px 50px #29608225;text-align:center}h1{color:#b65b0c;font-size:clamp(23px,4vw,32px);margin:15px 0 8px}p{line-height:1.5}button{font:inherit;cursor:pointer;border-radius:16px;padding:12px;border:2px solid #d5e2ea;background:white;font-weight:bold}button:disabled{cursor:wait;opacity:.65}button:focus-visible,[role=button]:focus-visible{outline:4px solid #7c3aed;outline-offset:3px}#nivel-txt{background:#fff0c1;color:#8d530b;padding:7px 12px;border-radius:24px;font-weight:bold}#puntaje-txt{font-weight:bold}body>div>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:8px}#patron-container,#banco-container,#controles-area{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}#patron-container>div{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:2px solid #f7cf77;border-radius:12px;background:white}#juego-area>div:first-child{background:#fff8e7;border:2px solid #f6d88b;border-radius:18px;padding:10px;margin:18px 0}#banco-container{margin:10px 0 22px}#banco-container button{width:64px;height:64px;display:grid;place-items:center;box-shadow:0 4px 0 #cadbe5}#banco-container button.selected{border-color:#7c3aed;background:#eee5ff;transform:translateY(-4px)}#controles-area button:first-child{background:#059669;color:white;border-color:#047857;padding:14px 22px}#controles-area button:nth-child(2){background:#ffe4e6}#bridge-status{min-height:44px;font-weight:bold;color:#85500a;margin:6px 0 12px}.scene{position:relative;height:290px;border-radius:22px;overflow:hidden;background:linear-gradient(#bae9ff 0%,#e9faff 55%,#39bce7 55%,#1684c4 100%);isolation:isolate}.scene:before,.scene:after{content:"";position:absolute;width:19%;height:155px;bottom:0;background:linear-gradient(#7cba47 0 12%,#9f704c 12% 100%);border-radius:45% 40% 0 0;z-index:2}.scene:before{left:-4%}.scene:after{right:-4%}.sun{position:absolute;right:12%;top:17px;font-size:36px}.mountains{position:absolute;left:10%;top:24px;font-size:38px;opacity:.5}.river{position:absolute;bottom:15px;left:-20%;width:140%;font-size:32px;letter-spacing:22px;color:#c3f7ff;white-space:nowrap;animation:flow 4s linear infinite}.bridge{position:absolute;left:13%;right:13%;top:92px;height:120px;z-index:3}.ropes{position:absolute;inset:0;width:100%;height:120px;overflow:visible;pointer-events:none}.ropes path{fill:none;stroke:#845025;stroke-width:5}.ropes line{stroke:#9b6632;stroke-width:3}.post{position:absolute;top:60px;width:13px;height:133px;background:linear-gradient(90deg,#82502c,#c18b4c,#82502c);border-radius:6px;z-index:5}.post.left{left:12%}.post.right{right:12%}#grid-container{position:absolute;top:52px;left:0;right:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;padding:0;background:none;border:0;min-height:0;margin:0}#grid-container>div{position:relative;height:67px;min-width:0;border:2px solid #92551e;border-radius:5px;background:repeating-linear-gradient(0deg,#c78b49 0 4px,#dba35e 5px 17px);box-shadow:0 7px 0 #865023;display:flex;align-items:center;justify-content:center;transform-origin:50% 15%;color:#5c381c}#grid-container>div[id]{cursor:pointer;background:#fff2c9;border:3px dashed #b67b27}#grid-container svg{width:85%;max-width:40px;filter:drop-shadow(0 2px 0 #ffffffaa)}#grid-container span{font-size:12px;font-weight:bold}.duende{position:absolute;left:1%;top:100px;font-size:43px;z-index:6;filter:drop-shadow(0 3px 2px #0003)}.splash{position:absolute;left:45%;bottom:20px;font-size:52px;opacity:0;z-index:7}.testing .bridge{animation:shake .17s linear 4}.collapsing #grid-container>div{animation:fall 1.15s cubic-bezier(.45,0,.85,.5) forwards;animation-delay:var(--delay)}.collapsing .ropes{animation:ropeFall 1.2s ease-in forwards}.collapsing .splash{animation:splash .8s .8s both}.crossing .duende{animation:cross 2s ease-in-out forwards}.safe .duende{animation:hop .55s ease-in-out}.rebuilding #grid-container>div{animation:rebuild .5s ease-out both;animation-delay:var(--delay)}
+@keyframes flow{to{transform:translateX(80px)}}@keyframes shake{25%{transform:translate(-2px,1px) rotate(-.5deg)}75%{transform:translate(2px,-1px) rotate(.5deg)}}@keyframes fall{15%{transform:translateY(3px) rotate(4deg)}100%{transform:translate(var(--drift),165px) rotate(var(--turn));opacity:0}}@keyframes ropeFall{to{transform:translateY(110px) rotate(8deg);opacity:0}}@keyframes splash{0%{opacity:0;transform:scale(.3)}35%{opacity:1;transform:scale(1.4)}100%{opacity:0;transform:translateY(-40px) scale(1.8)}}@keyframes cross{0%{left:1%;transform:translateY(0)}25%{transform:translateY(-10px)}50%{transform:translateY(0)}75%{transform:translateY(-10px)}100%{left:86%;transform:translateY(0)}}@keyframes hop{50%{transform:translateY(-20px)}}@keyframes rebuild{from{transform:translateY(-35px);opacity:0}to{transform:translateY(0);opacity:1}}@media(max-width:480px){body{padding:8px}body>div{padding:14px}.scene{height:260px}.bridge{left:10%;right:10%}.post.left{left:9%}.post.right{right:9%}#grid-container{gap:2px}#grid-container>div{height:61px}.duende{font-size:34px;top:109px}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-delay:0ms!important;transition:none!important}}
+</style>
+</head>
+<body class="bg-sky-100 flex flex-col items-center justify-center min-h-screen select-none p-4 font-sans">
+
+    <div class="bg-white rounded-3xl shadow-2xl p-6 max-w-md w-full text-center border-4 border-amber-300">
+        <!-- Encabezado -->
+        <div class="flex justify-between items-center mb-3">
+            <span id="nivel-txt" class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">Reto 1 de 5</span>
+            <span id="puntaje-txt" class="text-slate-500 font-semibold text-sm">⭐ 0 aciertos</span>
+        </div>
+
+        <h1 class="text-2xl font-black text-amber-600 mb-1">🌉 El Puente de las Formas</h1>
+        <p id="instruccion-txt" class="text-slate-600 text-sm mb-4">Completa el patrón lógico para que el duende cruce el río.</p>
+
+        <!-- Contenedor dinámico (Juego o Pantalla Final) -->
+        <div id="juego-area">
+            <!-- Patrón a seguir -->
+            <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-3 mb-4">
+                <p class="text-xs font-bold text-amber-700 mb-2 uppercase">Patrón del Camino:</p>
+                <div id="patron-container" class="flex justify-center items-center gap-2 flex-wrap">
+                    <!-- Se inyecta con JS -->
+                </div>
+            </div>
+
+            <!-- Tablero del Puente (Huecos interactivos) -->
+            <div id="grid-container" class="grid gap-2 mb-6 bg-slate-100 p-4 rounded-2xl border-2 border-dashed border-slate-300 min-h-[110px] items-center justify-center">
+                <!-- Se inyecta con JS -->
+            </div>
+
+            <!-- Banco de fichas disponibles para elegir -->
+            <div class="mb-6">
+                <p class="text-xs font-bold text-slate-500 mb-2 uppercase">Toca la pieza que falta:</p>
+                <div id="banco-container" class="flex justify-center gap-3">
+                    <!-- Se inyecta con JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles -->
+        <div id="controles-area" class="flex justify-center gap-3">
+            <button onclick="verificarPuente()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition transform active:scale-95 text-base flex items-center gap-2">
+                🚀 ¡Probar Puente!
+            </button>
+            <button onclick="reiniciarJuegoCompleto()" class="bg-rose-400 hover:bg-rose-500 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition transform active:scale-95 text-base" title="Reiniciar">
+                🔄
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const tiposFiguras = {
+            circulo: { nombre: 'Círculo', svg: '<circle cx="24" cy="24" r="18" fill="#ef4444" />' },
+            cuadrado: { nombre: 'Cuadrado', svg: '<rect x="8" y="8" width="32" height="32" rx="6" fill="#3b82f6" />' },
+            triangulo: { nombre: 'Triángulo', svg: '<polygon points="24,6 42,40 6,40" fill="#eab308" />' },
+            estrella: { nombre: 'Estrella', svg: '<polygon points="24,4 30,17 44,19 33,29 36,43 24,35 12,43 15,29 4,19 18,17" fill="#10b981" />' }
+        };
+
+        const TOTAL_RETOS = 5;
+        let rondaActual = 1;
+        let puntaje = 0;
+        let estadoActualTablero = [];
+        let respuestasCorrectasNivel = [];
+        let patronActual = [];
+        let huecosActuales = [];
+        let fichaSeleccionada = null;
+        let juegoTerminado = false;
+        let animando = false;
+        let temporizadores = [];
+        const despues = (fn, ms) => temporizadores.push(setTimeout(fn, ms));
+        function bloquear(valor) { animando = valor; document.querySelectorAll("#controles-area button, #banco-container button").forEach(b => b.disabled = valor); }
+
+        function hablar(texto) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(texto);
+                utterance.lang = 'es-MX';
+                utterance.pitch = 1.2;
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function generarPatronAleatorio() {
+            const clavesFiguras = Object.keys(tiposFiguras);
+            const tipoSecuencia = Math.random();
+            let patron = [];
+
+            if (tipoSecuencia < 0.5) {
+                const f1 = clavesFiguras[Math.floor(Math.random() * clavesFiguras.length)];
+                let f2 = f1;
+                while (f2 === f1) {
+                    f2 = clavesFiguras[Math.floor(Math.random() * clavesFiguras.length)];
+                }
+                patron = [f1, f2, f1, f2, f1, f2];
+            } else {
+                const f1 = clavesFiguras[Math.floor(Math.random() * clavesFiguras.length)];
+                let f2 = f1, f3 = f1;
+                while (f2 === f1) f2 = clavesFiguras[Math.floor(Math.random() * clavesFiguras.length)];
+                while (f3 === f1 || f3 === f2) f3 = clavesFiguras[Math.floor(Math.random() * clavesFiguras.length)];
+                patron = [f1, f2, f3, f1, f2, f3];
+            }
+
+            let huecos = [];
+            while (huecos.length < 2) {
+                const idxAleatorio = Math.floor(Math.random() * patron.length);
+                if (!huecos.includes(idxAleatorio)) {
+                    huecos.push(idxAleatorio);
+                }
+            }
+            huecos.sort((a, b) => a - b);
+
+            return { patron, huecos };
+        }
+
+        function iniciarJuego() {
+            if (rondaActual > TOTAL_RETOS) {
+                mostrarPantallaFinal();
+                return;
+            }
+
+            juegoTerminado = false;
+            animando = false;
+            fichaSeleccionada = null;
+            document.getElementById('nivel-txt').innerText = `Reto ${rondaActual} de ${TOTAL_RETOS}`;
+            document.getElementById('puntaje-txt').innerText = `⭐ ${puntaje} aciertos`;
+            document.getElementById('instruccion-txt').innerText = "Completa el patrón lógico para que el duende cruce el río.";
+            document.getElementById('controles-area').style.display = 'flex';
+
+            const generado = generarPatronAleatorio();
+            patronActual = generado.patron;
+            huecosActuales = generado.huecos;
+
+            const juegoArea = document.getElementById('juego-area');
+            juegoArea.innerHTML = `
+                <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-3 mb-4">
+                    <p class="text-xs font-bold text-amber-700 mb-2 uppercase">Patrón del Camino:</p>
+                    <div id="patron-container" class="flex justify-center items-center gap-2 flex-wrap"></div>
+                </div>
+                <div class="scene" id="scene" aria-label="Puente de madera con cuerdas sobre un río">
+                    <span class="sun" aria-hidden="true">☀️</span><span class="mountains" aria-hidden="true">☁️ ☁️</span><div class="river" aria-hidden="true">〜 〜 〜 〜 〜 〜 〜 〜</div>
+                    <div class="post left"></div><div class="post right"></div>
+                    <div class="bridge"><svg class="ropes" viewBox="0 0 600 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0 Q300 65 600 0 M0 26 Q300 91 600 26"/><g><line x1="50" y1="6" x2="50" y2="65"/><line x1="150" y1="15" x2="150" y2="65"/><line x1="250" y1="29" x2="250" y2="65"/><line x1="350" y1="29" x2="350" y2="65"/><line x1="450" y1="15" x2="450" y2="65"/><line x1="550" y1="6" x2="550" y2="65"/></g></svg><div id="grid-container"></div></div>
+                    <span class="duende" aria-label="Duende esperando para cruzar">🧝</span><span class="splash" aria-hidden="true">💦</span>
+                </div><p id="bridge-status" role="status" aria-live="polite">Elige una figura y toca un espacio del puente.</p>
+                <div class="mb-6">
+                    <p class="text-xs font-bold text-slate-500 mb-2 uppercase">Toca la pieza que falta:</p>
+                    <div id="banco-container" class="flex justify-center gap-3"></div>
+                </div>
+            `;
+
+            const patronContainer = document.getElementById('patron-container');
+            const gridContainer = document.getElementById('grid-container');
+            const bancoContainer = document.getElementById('banco-container');
+
+            estadoActualTablero = [...patronActual];
+            respuestasCorrectasNivel = [];
+
+            patronActual.forEach((figuraKey) => {
+                const div = document.createElement('div');
+                div.className = `w-10 h-10 rounded-xl flex items-center justify-center bg-white shadow-md border-2 border-amber-200`;
+                div.innerHTML = `<svg width="30" height="30" viewBox="0 0 48 48">${tiposFiguras[figuraKey].svg}</svg>`;
+                patronContainer.appendChild(div);
+            });
+
+            patronActual.forEach((figuraKey, index) => {
+                const celda = document.createElement('div');
+                celda.className = `h-20 rounded-xl flex flex-col items-center justify-center border-2 transition-all `;
+                
+                if (huecosActuales.includes(index)) {
+                    respuestasCorrectasNivel.push({ index: index, figura: figuraKey });
+                    celda.classList.add('bg-white', 'border-dashed', 'border-amber-400', 'cursor-pointer');
+                    celda.id = `hueco-${index}`;
+                    celda.innerHTML = `<span class="text-xs text-amber-500 font-bold">Vacío</span>`;
+                    celda.onclick = () => colocarFiguraEnHueco(index);
+                    estadoActualTablero[index] = null;
+                } else {
+                    celda.classList.add('bg-amber-100', 'border-amber-300', 'shadow-inner');
+                    celda.innerHTML = `<svg width="36" height="36" viewBox="0 0 48 48">${tiposFiguras[figuraKey].svg}</svg>`;
+                }
+                celda.style.setProperty('--delay', `${Math.abs(index-2.5)*75}ms`);
+                celda.style.setProperty('--drift', `${(index-2.5)*13}px`);
+                celda.style.setProperty('--turn', `${(index-2.5)*18}deg`);
+                if(huecosActuales.includes(index)) { celda.setAttribute('role','button'); celda.tabIndex=0; celda.setAttribute('aria-label', `Espacio ${index+1}: elegir figura`); celda.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();colocarFiguraEnHueco(index);}}; }
+                gridContainer.appendChild(celda);
+            });
+
+            // Opciones sin repetir: figuras necesarias (únicas) + figuras distintas de relleno hasta tener 3
+            let fichasBanco = [...new Set(respuestasCorrectasNivel.map(r => r.figura))];
+            const todasClaves = Object.keys(tiposFiguras);
+            const restantes = todasClaves.filter(k => !fichasBanco.includes(k)).sort(() => Math.random() - 0.5);
+            while (fichasBanco.length < 3 && restantes.length) fichasBanco.push(restantes.pop());
+            fichasBanco.sort(() => Math.random() - 0.5);
+
+            fichasBanco.forEach(figuraKey => {
+                const btnFicha = document.createElement('button');
+                btnFicha.className = `w-14 h-14 rounded-2xl bg-white shadow-md border-2 border-slate-200 flex items-center justify-center hover:scale-105 active:scale-95 transition tile`;
+                btnFicha.innerHTML = `<svg width="38" height="38" viewBox="0 0 48 48">${tiposFiguras[figuraKey].svg}</svg>`;
+                btnFicha.setAttribute('aria-label', tiposFiguras[figuraKey].nombre);
+                btnFicha.dataset.figura = figuraKey;
+                btnFicha.onclick = () => seleccionarFichaBanco(figuraKey);
+                bancoContainer.appendChild(btnFicha);
+            });
+
+            hablar("Observa el patrón y completa el puente.");
+        }
+
+        function seleccionarFichaBanco(figuraKey) {
+            if(animando || juegoTerminado) return;
+            document.querySelectorAll('#banco-container button').forEach(b => b.classList.toggle('selected',b.dataset.figura===figuraKey));
+            fichaSeleccionada = figuraKey;
+            hablar(tiposFiguras[figuraKey].nombre);
+        }
+
+        function colocarFiguraEnHueco(index) {
+            if(animando || juegoTerminado) return;
+            if (!fichaSeleccionada) {
+                hablar("Primero toca una figura de abajo.");
+                return;
+            }
+            estadoActualTablero[index] = fichaSeleccionada;
+            const celda = document.getElementById(`hueco-${index}`);
+            celda.className = `h-20 rounded-xl flex items-center justify-center border-2 bg-emerald-50 border-emerald-300 shadow-md transition-all`;
+            celda.innerHTML = `<svg width="38" height="38" viewBox="0 0 48 48">${tiposFiguras[fichaSeleccionada].svg}</svg>`;
+            celda.setAttribute('aria-label', `Espacio ${index+1}: ${tiposFiguras[fichaSeleccionada].nombre}. Toca para cambiar.`);
+            document.querySelectorAll('#banco-container button').forEach(b=>b.classList.remove('selected'));
+            fichaSeleccionada = null; 
+        }
+
+        function verificarPuente() {
+            if (juegoTerminado || animando) return;
+            const status = document.getElementById('bridge-status');
+            if (estadoActualTablero.includes(null)) {
+                status.textContent = 'Completa los dos espacios antes de probar el puente.';
+                hablar(status.textContent); return;
+            }
+            const correcto = estadoActualTablero.every((f,i)=>f===patronActual[i]);
+            const scene = document.getElementById('scene');
+            bloquear(true); scene.className='scene testing';
+            status.textContent='Probando la resistencia del puente…';
+            despues(()=>{
+                if(correcto){
+                    scene.className='scene crossing';
+                    puntaje++;
+                    document.getElementById('puntaje-txt').textContent=`⭐ ${puntaje} aciertos`;
+                    status.textContent='¡La secuencia es correcta! El duende puede cruzar.';
+                    hablar('¡Excelente trabajo! El puente es seguro.');
+                    despues(()=>{rondaActual++; iniciarJuego(); bloquear(false);},2400);
+                }else{
+                    scene.className='scene collapsing';
+                    status.textContent='¡Oh! El puente se desploma. El duende espera a salvo en la orilla.';
+                    hablar('¡Oh! Revisa el orden de las figuras. Vamos a reconstruir el puente.');
+                    despues(()=>{
+                        scene.className='scene rebuilding';
+                        status.textContent='¡Puente reconstruido! Cambia las figuras y vuelve a probar.';
+                        despues(()=>{scene.className='scene';bloquear(false);},850);
+                    },2300);
+                }
+            },700);
+        }
+
+        function mostrarPantallaFinal() {
+            if (window.parent !== window) { parent.postMessage({tipo:"fin", app:"duende"}, "*"); return; }
+            juegoTerminado = true;
+            document.getElementById('nivel-txt').innerText = "¡Completado!";
+            document.getElementById('puntaje-txt').innerText = `⭐ ${puntaje} de ${TOTAL_RETOS}`;
+            document.getElementById('instruccion-txt').innerText = "¡Felicidades! Ayudaste al duende a cruzar todos los puentes.";
+            
+            const juegoArea = document.getElementById('juego-area');
+            juegoArea.innerHTML = `
+                <div class="py-8 flex flex-col items-center justify-center">
+                    <span class="text-6xl mb-4">🏆</span>
+                    <h2 class="text-xl font-bold text-emerald-600 mb-2">¡Lo lograste campeón!</h2>
+                    <p class="text-slate-600 text-sm">Has terminado los 5 retos de lógica con éxito.</p>
+                </div>
+            `;
+
+            document.getElementById('controles-area').innerHTML = `
+                <button onclick="reiniciarJuegoCompleto()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg transition transform active:scale-95 text-base flex items-center gap-2">
+                    🔄 Jugar de nuevo
+                </button>
+            `;
+
+            hablar("¡Felicidades! Has terminado todos los retos con éxito.");
+        }
+
+        function reiniciarJuegoCompleto() {
+            temporizadores.forEach(clearTimeout); temporizadores=[]; animando=false;
+            rondaActual = 1;
+            puntaje = 0;
+            // Restaurar botones originales de control por si venimos de pantalla final
+            document.getElementById('controles-area').innerHTML = `
+                <button onclick="verificarPuente()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition transform active:scale-95 text-base flex items-center gap-2">
+                    🚀 ¡Probar Puente!
+                </button>
+                <button onclick="reiniciarJuegoCompleto()" class="bg-rose-400 hover:bg-rose-500 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition transform active:scale-95 text-base" title="Reiniciar">
+                    🔄
+                </button>
+            `;
+            iniciarJuego();
+        }
+
+        window.onload = iniciarJuego;
+    </script>
+</body>
+</html>

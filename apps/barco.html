@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Barco de la Letra D</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,{
+        %22name%22: %22El Barco de la Letra D%22,
+        %22short_name%22: %22BarcoLetraD%22,
+        %22start_url%22: %22.%22,
+        %22display%22: %22standalone%22,
+        %22background_color%22: %22%230f172a%22,
+        %22theme_color%22: %22%2338bdf8%22,
+        %22icons%22: [{
+            %22src%22: %22https://placehold.co/192x192/0ea5e9/white?text=⛵%22,
+            %22sizes%22: %22192x192%22,
+            %22type%22: %22image/png%22
+        }]
+    }">
+
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e3a8a);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #f8fafc;
+        }
+        .title-font { font-family: 'Fredoka One', cursive; }
+        
+        /* Barco de fondo */
+        #bg-ship-container {
+            position: fixed;
+            bottom: -5vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120vw;
+            max-width: 800px;
+            z-index: 0;
+            pointer-events: none;
+            transition: opacity 1.5s ease-in-out, filter 1.5s ease-in-out;
+        }
+        .ship-faded { opacity: 0.25; filter: grayscale(80%) blur(2px); }
+        .ship-solid { opacity: 1; filter: grayscale(0%) blur(0px); }
+
+        @keyframes floatShip {
+            0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+            50% { transform: translateX(-50%) translateY(-15px) rotate(2deg); }
+        }
+        .animate-ship { animation: floatShip 6s ease-in-out infinite; }
+
+        /* Contenedor del juego */
+        #game-board {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Animación para las imágenes (emojis) */
+        @keyframes pulse-color {
+            0% { filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.4)); transform: scale(1) rotate(0deg); }
+            50% { filter: drop-shadow(0 0 30px rgba(56, 189, 248, 0.9)); transform: scale(1.15) rotate(5deg); }
+            100% { filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.4)); transform: scale(1) rotate(0deg); }
+        }
+        #word-emoji {
+            animation: pulse-color 3s infinite ease-in-out;
+            display: inline-block;
+        }
+
+        /* Estrella de disparo */
+        @keyframes shootStar {
+            0% { transform: translate(20vw, 80vh) scale(0) rotate(0deg); opacity: 1; }
+            40% { transform: translate(50vw, 40vh) scale(4) rotate(180deg); filter: drop-shadow(0 0 20px #fbbf24); opacity: 1; }
+            100% { transform: translate(80vw, -10vh) scale(1) rotate(360deg); opacity: 0; }
+        }
+        .star-projectile {
+            position: fixed;
+            top: 0; left: 0;
+            z-index: 50;
+            animation: shootStar 2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            pointer-events: none;
+        }
+
+        /* Botones de sílabas */
+        .bubble-btn {
+            background: linear-gradient(135deg, #38bdf8, #0284c7);
+            box-shadow: inset 0 4px 6px rgba(255,255,255,0.4), 0 4px 6px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+        .bubble-btn:active {
+            transform: scale(0.9);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+
+    <!-- Fondo de Barco Pirata SVG -->
+    <div id="bg-ship-container" class="ship-faded animate-ship">
+        <svg viewBox="0 0 800 500" width="100%" height="100%">
+            <!-- Mar -->
+            <path d="M0,400 Q200,350 400,400 T800,400 L800,500 L0,500 Z" fill="#0369a1"/>
+            <path d="M0,430 Q200,480 400,430 T800,430 L800,500 L0,500 Z" fill="#0284c7" opacity="0.8"/>
+            <!-- Casco del barco -->
+            <path d="M150,380 L200,250 L600,250 L650,380 Z" fill="#78350f"/>
+            <path d="M150,380 Q400,450 650,380 Z" fill="#451a03"/>
+            <circle cx="280" cy="320" r="15" fill="#0f172a" stroke="#fbbf24" stroke-width="3"/>
+            <circle cx="400" cy="320" r="15" fill="#0f172a" stroke="#fbbf24" stroke-width="3"/>
+            <circle cx="520" cy="320" r="15" fill="#0f172a" stroke="#fbbf24" stroke-width="3"/>
+            <rect x="390" y="50" width="20" height="200" fill="#451a03"/>
+            <rect x="250" y="100" width="15" height="150" fill="#451a03"/>
+            <path d="M400,60 Q550,100 400,200 Q250,100 400,60 Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+            <path d="M257,110 Q350,140 257,220 Q150,140 257,110 Z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+            <rect x="410" y="50" width="60" height="40" fill="#000"/>
+            <circle cx="440" cy="65" r="8" fill="#fff"/>
+            <path d="M430,78 L450,78 L440,70 Z" fill="#fff"/>
+        </svg>
+    </div>
+
+    <main id="game-board" class="w-full max-w-xl rounded-3xl p-6 md:p-8 flex flex-col items-center text-center">
+        
+        <header class="w-full flex justify-between items-center mb-6 border-b border-slate-500 pb-4">
+            <h1 class="title-font text-2xl md:text-3xl text-amber-400 drop-shadow-md">⛵ Letra D</h1>
+            <div class="flex gap-4 text-sm font-bold bg-slate-800/80 px-4 py-2 rounded-xl">
+                <span id="ui-level" class="text-sky-300">Nivel 1 (DA)</span>
+                <span id="ui-round" class="text-white">R: 1/4</span>
+                <span id="ui-fails" class="text-rose-400">❌ 0/4</span>
+            </div>
+        </header>
+
+        <!-- Pantallas -->
+        <div id="screen-start" class="w-full flex flex-col items-center">
+            <div class="text-7xl mb-4">🏴‍☠️</div>
+            <h2 class="title-font text-3xl mb-4 text-sky-300">Sílabas con D</h2>
+            <p class="mb-6 text-slate-200">Arma las palabras con DA, DE, DI, DO, DU. ¡Tienes 4 vidas por sílaba!</p>
+            <button onclick="startGame()" class="title-font text-xl bg-amber-500 hover:bg-amber-400 text-amber-950 px-8 py-4 rounded-2xl shadow-[0_6px_0_#b45309] active:shadow-[0_0px_0_#b45309] active:translate-y-[6px] transition-all">
+                ¡Zarpar! ⚓
+            </button>
+        </div>
+
+        <div id="screen-game" class="w-full hidden flex flex-col items-center">
+            <div class="bg-white/90 rounded-2xl p-6 w-full mb-6 text-slate-800 shadow-lg relative">
+                <!-- Imagen Animada -->
+                <div id="word-emoji" class="text-8xl mb-4 mt-2">🎲</div>
+                
+                <div class="flex items-center justify-center gap-4">
+                    <div id="word-hidden" class="title-font text-2xl md:text-3xl tracking-[0.5em] text-slate-400 uppercase">_ _</div>
+                    <button onclick="hablarPalabraCompleta()" class="bg-sky-400 hover:bg-sky-500 text-white p-3 rounded-full shadow-md active:scale-95 transition-transform" title="Escuchar palabra">
+                        🔊
+                    </button>
+                </div>
+            </div>
+
+            <!-- Slots del Barco -->
+            <div id="slots-container" class="flex gap-4 mb-8"></div>
+
+            <p class="text-slate-300 text-sm mb-3">Toca la sílaba correcta:</p>
+            <div id="bubbles-container" class="flex flex-wrap justify-center gap-4 min-h-[80px]"></div>
+        </div>
+
+        <div id="screen-message" class="w-full hidden flex flex-col items-center py-8">
+            <div id="msg-icon" class="text-7xl mb-4 animate-bounce">🎉</div>
+            <h2 id="msg-title" class="title-font text-3xl text-amber-400 mb-2">¡Nivel Completado!</h2>
+            <p id="msg-text" class="text-slate-300 mb-8 text-lg">¡Eres un gran capitán!</p>
+            <button id="msg-btn" onclick="nextAction()" class="title-font text-xl bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-2xl shadow-[0_6px_0_#047857] active:shadow-[0_0px_0_#047857] active:translate-y-[6px] transition-all">
+                Siguiente
+            </button>
+        </div>
+    </main>
+
+    <div id="animation-layer"></div>
+
+    <script>
+        /* Base de datos (Se eligen 4 al azar por nivel) */
+        const db = [
+            { level: 1, letter: "DA", name: "Sílaba DA", words: [
+                { text: "DADO", sil: ["DA", "DO"], emoji: "🎲" },
+                { text: "DAMA", sil: ["DA", "MA"], emoji: "👩" },
+                { text: "DATO", sil: ["DA", "TO"], emoji: "📊" },
+                { text: "DANZA", sil: ["DAN", "ZA"], emoji: "💃" },
+                { text: "DARDO", sil: ["DAR", "DO"], emoji: "🎯" },
+                { text: "DÁTIL", sil: ["DÁ", "TIL"], emoji: "🌴" },
+                { text: "DALIA", sil: ["DA", "LIA"], emoji: "🌸" },
+                { text: "DAÑO", sil: ["DA", "ÑO"], emoji: "🤕" },
+                { text: "DANTE", sil: ["DAN", "TE"], emoji: "👦" },
+                { text: "DAVID", sil: ["DA", "VID"], emoji: "👨" }
+            ]},
+            { level: 2, letter: "DE", name: "Sílaba DE", words: [
+                { text: "DEDO", sil: ["DE", "DO"], emoji: "👆" },
+                { text: "DEDAL", sil: ["DE", "DAL"], emoji: "🧵" },
+                { text: "DEBER", sil: ["DE", "BER"], emoji: "📝" },
+                { text: "DELFÍN", sil: ["DEL", "FÍN"], emoji: "🐬" },
+                { text: "DENTISTA", sil: ["DEN", "TIS", "TA"], emoji: "🦷" },
+                { text: "DEPORTE", sil: ["DE", "POR", "TE"], emoji: "⚽" },
+                { text: "DESEO", sil: ["DE", "SE", "O"], emoji: "🌠" },
+                { text: "DENTRO", sil: ["DEN", "TRO"], emoji: "📦" },
+                { text: "DENSO", sil: ["DEN", "SO"], emoji: "🌫️" },
+                { text: "DELTA", sil: ["DEL", "TA"], emoji: "📐" }
+            ]},
+            { level: 3, letter: "DI", name: "Sílaba DI", words: [
+                { text: "DIBUJO", sil: ["DI", "BU", "JO"], emoji: "🎨" },
+                { text: "DINERO", sil: ["DI", "NE", "RO"], emoji: "💰" },
+                { text: "DIVÁN", sil: ["DI", "VÁN"], emoji: "🛋️" },
+                { text: "DIENTE", sil: ["DIEN", "TE"], emoji: "🦷" },
+                { text: "DÍA", sil: ["DÍ", "A"], emoji: "☀️" },
+                { text: "DIARIO", sil: ["DIA", "RIO"], emoji: "📰" },
+                { text: "DIETA", sil: ["DIE", "TA"], emoji: "🥗" },
+                { text: "DISCO", sil: ["DIS", "CO"], emoji: "💿" },
+                { text: "DIANA", sil: ["DIA", "NA"], emoji: "🎯" },
+                { text: "DINGO", sil: ["DIN", "GO"], emoji: "🐕" }
+            ]},
+            { level: 4, letter: "DO", name: "Sílaba DO", words: [
+                { text: "DONA", sil: ["DO", "NA"], emoji: "🍩" },
+                { text: "DOCE", sil: ["DO", "CE"], emoji: "🕛" },
+                { text: "DOMINÓ", sil: ["DO", "MI", "NÓ"], emoji: "🁣" },
+                { text: "DOCTOR", sil: ["DOC", "TOR"], emoji: "👨‍⚕️" },
+                { text: "DOMINGO", sil: ["DO", "MIN", "GO"], emoji: "📅" },
+                { text: "DORADO", sil: ["DO", "RA", "DO"], emoji: "✨" },
+                { text: "DOLOR", sil: ["DO", "LOR"], emoji: "🤕" },
+                { text: "DOSIS", sil: ["DO", "SIS"], emoji: "💊" },
+                { text: "DOBLAR", sil: ["DO", "BLAR"], emoji: "📄" },
+                { text: "DORSO", sil: ["DOR", "SO"], emoji: "💪" }
+            ]},
+            { level: 5, letter: "DU", name: "Sílaba DU", words: [
+                { text: "DUCHA", sil: ["DU", "CHA"], emoji: "🚿" },
+                { text: "DUDA", sil: ["DU", "DA"], emoji: "❓" },
+                { text: "DURO", sil: ["DU", "RO"], emoji: "🧱" },
+                { text: "DUENDE", sil: ["DUEN", "DE"], emoji: "🧝" },
+                { text: "DULCE", sil: ["DUL", "CE"], emoji: "🍬" },
+                { text: "DURAZNO", sil: ["DU", "RAZ", "NO"], emoji: "🍑" },
+                { text: "DUQUE", sil: ["DU", "QUE"], emoji: "👑" },
+                { text: "DUETO", sil: ["DUE", "TO"], emoji: "🎤" },
+                { text: "DUEÑO", sil: ["DUE", "ÑO"], emoji: "🔑" },
+                { text: "DUNA", sil: ["DU", "NA"], emoji: "🏜️" }
+            ]}
+        ];
+
+        let curLvlIdx = 0;
+        let curRound = 0;
+        let fails = 0;
+        let activeWords = [];
+        let curWord = null;
+        let userSlots = [];
+        let totalFails = 0;
+
+        /* Funciones de Audio */
+        function hablar(texto) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                let u = new SpeechSynthesisUtterance(texto);
+                u.lang = 'es-MX';
+                u.rate = 0.9;
+                window.speechSynthesis.speak(u);
+            }
+        }
+
+        function hablarSilaba(silaba) {
+            let tts = silaba.toLowerCase();
+            tts = tts.replace('a','á').replace('e','é').replace('i','í').replace('o','ó').replace('u','ú');
+            tts += ","; 
+            hablar(tts);
+        }
+
+        function hablarPalabraCompleta() {
+            if(curWord) hablar(curWord.text);
+        }
+
+        /* Lógica del Juego */
+        function switchScreen(id) {
+            ["screen-start", "screen-game", "screen-message"].forEach(s => {
+                document.getElementById(s).classList.add("hidden");
+            });
+            document.getElementById(id).classList.remove("hidden");
+        }
+
+        function updateUI() {
+            const lvlData = db[curLvlIdx];
+            document.getElementById("ui-level").innerText = `Nivel ${lvlData.level} (${lvlData.letter})`;
+            document.getElementById("ui-round").innerText = `R: ${curRound + 1}/${activeWords.length}`;
+            document.getElementById("ui-fails").innerText = `❌ ${fails}/4`;
+        }
+
+        function startGame() {
+            curLvlIdx = 0;
+            totalFails = 0;
+            startLevel();
+        }
+
+        function startLevel() {
+            curRound = 0;
+            fails = 0;
+            // Se seleccionan 4 palabras al azar de la sílaba actual
+            activeWords = [...db[curLvlIdx].words].sort(() => Math.random() - 0.5).slice(0, 4);
+            
+            document.getElementById("bg-ship-container").className = "ship-faded animate-ship";
+            switchScreen("screen-game");
+            loadRound();
+        }
+
+        function loadRound() {
+            if (curRound >= activeWords.length) {
+                handleLevelComplete();
+                return;
+            }
+            updateUI();
+            curWord = activeWords[curRound];
+            userSlots = new Array(curWord.sil.length).fill("");
+
+            document.getElementById("word-emoji").innerText = curWord.emoji;
+            document.getElementById("word-hidden").innerText = curWord.sil.map(()=>"_").join(" ");
+
+            const slotsC = document.getElementById("slots-container");
+            slotsC.innerHTML = "";
+            curWord.sil.forEach((_, i) => {
+                let div = document.createElement("div");
+                div.id = `slot-${i}`;
+                div.className = "w-16 h-16 md:w-20 md:h-20 bg-slate-800/80 border-2 border-dashed border-sky-400 rounded-xl flex items-center justify-center text-2xl font-bold text-white title-font";
+                div.innerText = "?";
+                slotsC.appendChild(div);
+            });
+
+            generateBubbles();
+            hablar(`Forma la palabra: ${curWord.text}`);
+        }
+
+        function generateBubbles() {
+            let correct = [...curWord.sil];
+            
+            let allSyllables = db.flatMap(lvl => lvl.words).flatMap(w => w.sil);
+            let distractorsBase = allSyllables.filter(s => !correct.includes(s));
+            
+            let distractors = [...new Set(distractorsBase)].sort(() => Math.random() - 0.5);
+            
+            let options = [...correct, ...distractors.slice(0, 2)].sort(() => Math.random() - 0.5);
+
+            const bc = document.getElementById("bubbles-container");
+            bc.innerHTML = "";
+            options.forEach(sil => {
+                let btn = document.createElement("button");
+                btn.className = "bubble-btn text-white title-font w-16 h-16 rounded-full text-xl flex items-center justify-center cursor-pointer";
+                btn.innerText = sil;
+                btn.onclick = () => selectSyllable(sil, btn);
+                bc.appendChild(btn);
+            });
+        }
+
+        function selectSyllable(sil, btn) {
+            hablarSilaba(sil);
+            btn.classList.add("opacity-30", "pointer-events-none");
+
+            let emptyIdx = userSlots.findIndex(s => s === "");
+            if (emptyIdx !== -1) {
+                userSlots[emptyIdx] = sil;
+                let slotDiv = document.getElementById(`slot-${emptyIdx}`);
+                slotDiv.innerText = sil;
+                slotDiv.classList.replace("bg-slate-800/80", "bg-sky-500");
+                slotDiv.classList.replace("border-dashed", "border-solid");
+
+                if (!userSlots.includes("")) {
+                    setTimeout(checkWord, 300);
+                }
+            }
+        }
+
+        function checkWord() {
+            let formated = userSlots.join("");
+            let target = curWord.sil.join("");
+
+            if (formated === target) {
+                hablar("¡Correcto!");
+                curRound++;
+                setTimeout(loadRound, 1000);
+            } else {
+                fails++;
+                totalFails++;
+                updateUI();
+                hablar("Oh no, inténtalo de nuevo.");
+                
+                // Si llega o supera los 4 fallos
+                if (fails >= 4) {
+                    handleLevelFail();
+                } else {
+                    setTimeout(() => {
+                        userSlots.fill("");
+                        loadRound(); 
+                    }, 1000);
+                }
+            }
+        }
+
+        /* Gestión de Niveles y Animaciones (Avance Automático) */
+        function handleLevelComplete() {
+            if (curLvlIdx < db.length - 1) {
+                // Animación visual de éxito y avance automático sin ventana de espera
+                document.getElementById("bg-ship-container").className = "ship-solid animate-ship";
+                shootStarAnimation();
+                hablar("¡Muy bien! Vamos con la siguiente.");
+                
+                curLvlIdx++;
+                
+                // Pequeña pausa para ver la estrella antes de empezar la siguiente sílaba
+                setTimeout(() => {
+                    startLevel();
+                }, 2000);
+                
+            } else {
+                // Pantalla final solo al terminar todo el juego
+                if (window.parent !== window) { parent.postMessage({tipo:"fin", app:"barco", fallas:totalFails}, "*"); return; }
+                switchScreen("screen-message");
+                document.getElementById("bg-ship-container").className = "ship-solid animate-ship";
+                shootStarAnimation();
+                document.getElementById("msg-icon").innerText = "👑🏆⭐";
+                document.getElementById("msg-title").innerText = "¡Ganaste el Juego!";
+                document.getElementById("msg-text").innerText = "¡Felicidades Capitán! Has dominado las sílabas de la letra D.";
+                document.getElementById("msg-btn").innerText = "Volver a Jugar";
+                hablar("¡Felicidades Capitán, ganaste el juego y la estrella dorada!");
+                window.nextActionCallback = startGame;
+            }
+        }
+
+        function handleLevelFail() {
+            switchScreen("screen-message");
+            document.getElementById("msg-icon").innerText = "🌊🌀";
+            document.getElementById("msg-title").innerText = "¡Marea Alta!";
+            document.getElementById("msg-text").innerText = "Superaste los 4 fallos. Hay que reiniciar esta sílaba.";
+            document.getElementById("msg-btn").innerText = "Reintentar Nivel";
+            hablar("Demasiados fallos, reintentemos el nivel.");
+            window.nextActionCallback = startLevel;
+        }
+
+        function nextAction() {
+            if (window.nextActionCallback) window.nextActionCallback();
+        }
+
+        function shootStarAnimation() {
+            const layer = document.getElementById("animation-layer");
+            layer.innerHTML = "";
+            let star = document.createElement("div");
+            star.className = "star-projectile text-8xl";
+            star.innerHTML = `
+                <svg viewBox="0 0 100 100" width="100" height="100">
+                    <polygon points="50,5 61,35 95,35 68,55 78,85 50,65 22,85 32,55 5,35 39,35" fill="#fbbf24" stroke="#fff" stroke-width="2"/>
+                </svg>`;
+            layer.appendChild(star);
+            setTimeout(() => { layer.innerHTML = ""; }, 2000);
+        }
+
+        /* PWA Service Worker (Inline Blob) */
+        const swCode = `
+            const CACHE_NAME = 'barco-letra-d-v3';
+            self.addEventListener('install', e => { self.skipWaiting(); });
+            self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+            self.addEventListener('fetch', e => {
+                e.respondWith(fetch(e.request).catch(() => new Response("Offline")));
+            });
+        `;
+        const blob = new Blob([swCode], {type: 'application/javascript'});
+        const swUrl = URL.createObjectURL(blob);
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(swUrl).catch(err => console.log('SW Error:', err));
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sílabas y Lógica con la D</title>
+<meta name="theme-color" content="#4F46E5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Letra D">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#4F46E5;overflow:hidden;font-family:'Trebuchet MS',Arial,sans-serif}
+  #frame{position:fixed;inset:0;width:100%;height:100%;border:0;background:#fff}
+  #overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.65);backdrop-filter:blur(6px);z-index:50}
+  #overlay.on{display:flex}
+  .card{background:#fff;border:5px solid #fbbf24;border-radius:28px;padding:28px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.4);animation:pop .35s ease-out}
+  .icono{font-size:64px;line-height:1.1;margin-bottom:6px}
+  .card h2{margin:6px 0;color:#7e22ce;font-size:26px}
+  .card p{margin:6px 0 18px;color:#475569;font-size:17px;line-height:1.4;font-weight:bold}
+  .card button{font:inherit;font-weight:bold;font-size:20px;color:#fff;background:linear-gradient(90deg,#34d399,#059669);border:0;border-bottom:5px solid #047857;border-radius:18px;padding:12px 28px;cursor:pointer}
+  .card button:active{transform:translateY(3px);border-bottom-width:2px}
+  .card.mal{border-color:#fb7185}.card.mal h2{color:#e11d48}
+  .card.mal button{background:linear-gradient(90deg,#fb923c,#ea580c);border-bottom-color:#c2410c}
+  #pasos{position:fixed;top:6px;right:8px;z-index:40;display:flex;gap:5px;pointer-events:none}
+  #pasos i{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid #4F46E5}
+  #pasos i.act{background:#fbbf24}#pasos i.ok{background:#10b981}
+  #confeti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60}
+  @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+</style>
+</head>
+<body>
+<iframe id="frame" title="Actividad" allow="autoplay"></iframe>
+<div id="pasos" aria-hidden="true"><i></i><i></i><i></i></div>
+<div id="overlay" role="dialog" aria-live="polite">
+  <div class="card" id="card">
+    <div class="icono" id="ov-icono">🎉</div>
+    <h2 id="ov-titulo"></h2>
+    <p id="ov-texto"></p>
+    <button id="ov-btn">Continuar</button>
+  </div>
+</div>
+<canvas id="confeti"></canvas>
+
+<script>
+/* ===== Reglas ===== */
+const MAX_FALLAS = 5;                       // más de 5 fallas => repetir
+const ACTIVIDADES = ['unir', 'duende', 'barco'];
+let paso = 0;
+
+const frame = document.getElementById('frame');
+const overlay = document.getElementById('overlay');
+const card = document.getElementById('card');
+const btn = document.getElementById('ov-btn');
+const pasosEls = [...document.querySelectorAll('#pasos i')];
+
+function hablar(t){
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(t); u.lang='es-MX'; u.rate=.95; u.pitch=1.15;
+  speechSynthesis.speak(u);
+}
+
+function pintarPasos(){
+  pasosEls.forEach((el,i)=>{ el.className = i<paso ? 'ok' : (i===paso ? 'act' : ''); });
+}
+
+function cargar(){
+  pintarPasos();
+  frame.src = 'apps/' + ACTIVIDADES[paso] + '.html?v=' + Date.now();
+}
+
+function mostrar({icono,titulo,texto,boton,mal,accion}){
+  document.getElementById('ov-icono').textContent = icono;
+  document.getElementById('ov-titulo').textContent = titulo;
+  document.getElementById('ov-texto').textContent = texto;
+  btn.textContent = boton;
+  card.className = 'card' + (mal ? ' mal' : '');
+  overlay.classList.add('on');
+  btn.onclick = () => { overlay.classList.remove('on'); detenerConfeti(); accion(); };
+  hablar(titulo + '. ' + texto);
+}
+
+/* ===== Mensajes de las actividades ===== */
+window.addEventListener('message', e => {
+  if (e.source !== frame.contentWindow) return;
+  const m = e.data || {};
+  if (m.tipo !== 'fin' || m.app !== ACTIVIDADES[paso]) return;
+
+  if (m.app === 'unir') {
+    if (m.fallas > MAX_FALLAS) {
+      mostrar({icono:'🔁', mal:true, titulo:'¡Vamos otra vez!',
+        texto:`Tuviste ${m.fallas} errores y el máximo es ${MAX_FALLAS}. Repitamos la actividad.`,
+        boton:'Repetir', accion:cargar});
+    } else {
+      mostrar({icono:'🌟', titulo:'¡Muy bien!',
+        texto:`Terminaste con ${m.fallas} ${m.fallas===1?'error':'errores'}. Ahora ayuda al duende a cruzar el puente.`,
+        boton:'Siguiente actividad', accion:()=>{ paso=1; cargar(); }});
+    }
+  }
+  else if (m.app === 'duende') {
+    mostrar({icono:'🧩', titulo:'¡Rompecabezas completado!',
+      texto:'El duende cruzó todos los puentes. Sigue la última actividad: el barco.',
+      boton:'Siguiente actividad', accion:()=>{ paso=2; cargar(); }});
+  }
+  else if (m.app === 'barco') {
+    if (m.fallas > MAX_FALLAS) {
+      mostrar({icono:'🌊', mal:true, titulo:'¡Vamos otra vez!',
+        texto:`Tuviste ${m.fallas} fallas y el máximo es ${MAX_FALLAS}. Repitamos esta actividad.`,
+        boton:'Repetir', accion:cargar});
+    } else {
+      paso = 3; pintarPasos();
+      lanzarConfeti();
+      mostrar({icono:'🏆', titulo:'¡Felicidades, lo lograste!',
+        texto:'Completaste todas las actividades. ¡Eres un campeón!',
+        boton:'Jugar de nuevo', accion:()=>{ paso=0; cargar(); }});
+    }
+  }
+});
+
+/* ===== Serpentinas ===== */
+const cv = document.getElementById('confeti'), cx = cv.getContext('2d');
+let piezas = [], raf = null;
+function ajustar(){ cv.width = innerWidth; cv.height = innerHeight; }
+addEventListener('resize', ajustar); ajustar();
+function lanzarConfeti(){
+  const cols = ['#ef4444','#f59e0b','#fbbf24','#10b981','#3b82f6','#8b5cf6','#ec4899'];
+  piezas = [];
+  for(let i=0;i<220;i++){
+    const izq = i%2===0;
+    piezas.push({
+      x: izq ? 0 : cv.width, y: cv.height*0.85,
+      vx: (izq?1:-1)*(4+Math.random()*9), vy: -(10+Math.random()*13),
+      w: 6+Math.random()*6, l: 14+Math.random()*26, rot: Math.random()*6.28,
+      vr: (Math.random()-.5)*.4, c: cols[i%cols.length], serp: Math.random()<.5, t: Math.random()*10
+    });
+  }
+  if(!raf) animar();
+  // segunda tanda para que dure
+  setTimeout(()=>{ if(overlay.classList.contains('on')) { const n=piezas.length; lanzarMas(); } }, 1800);
+}
+function lanzarMas(){
+  const cols = ['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899'];
+  for(let i=0;i<120;i++){
+    piezas.push({ x: Math.random()*cv.width, y: -20, vx:(Math.random()-.5)*3, vy:2+Math.random()*4,
+      w:6+Math.random()*6, l:14+Math.random()*26, rot:Math.random()*6.28, vr:(Math.random()-.5)*.4,
+      c:cols[i%cols.length], serp:Math.random()<.5, t:Math.random()*10 });
+  }
+}
+function animar(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  piezas.forEach(p=>{
+    p.vy += .28; p.vx *= .992; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.t += .25;
+    cx.save(); cx.translate(p.x,p.y); cx.rotate(p.rot); cx.fillStyle = p.c; cx.strokeStyle = p.c;
+    if(p.serp){ cx.lineWidth = 3; cx.beginPath(); cx.moveTo(0,0);
+      for(let k=1;k<=5;k++) cx.lineTo(Math.sin(p.t+k)*7, k*6); cx.stroke(); }
+    else cx.fillRect(-p.w/2,-p.l/2,p.w,p.l/2);
+    cx.restore();
+  });
+  piezas = piezas.filter(p => p.y < cv.height + 60);
+  if(piezas.length) raf = requestAnimationFrame(animar);
+  else { raf = null; cx.clearRect(0,0,cv.width,cv.height); }
+}
+function detenerConfeti(){ piezas = []; }
+
+/* ===== PWA ===== */
+if ('serviceWorker' in navigator) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+cargar();
+</script>
+</body>
+</html>
